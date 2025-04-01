@@ -10,6 +10,7 @@ export default function Index() {
         alignItems: "center",
       }}
     >
+      <Text className="font-bold text-lg my-10">Welcome to Home oop</Text>
       <Link href='/landing'>Landing</Link>
     </View>
   );
