@@ -1,6 +1,7 @@
 const express = require("express")
 const admin = require("firebase-admin")
 const bodyParser = require("body-parser")
+const auth = require("./controller/auth")
 require('dotenv').config();
 
 const app = express();
@@ -32,6 +33,7 @@ app.get("/users", async (req,res) => {
         res.status(500).send(error)
     }
 })
+app.use("/auth",auth);
 
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`)
