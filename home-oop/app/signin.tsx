@@ -17,7 +17,7 @@ const Signin = () => {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
   const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: 'https://auth.expo.io/christopher4113/home-oop', // Replace this
+    clientId: 'https://auth.expo.io/@christopher4113/home-oop', // Replace this
   });
 
   useEffect(() => {
