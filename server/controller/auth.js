@@ -93,6 +93,37 @@ router.post("/login", async (req, res) => {
   }
 });
 
+router.put("/forgot", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password)
+    return res.status(400).json({ error: "Email and password required" });
+
+  try {
+    const userRecord = await admin.auth().getUserByEmail(email).catch(() => null);
+    if (!userRecord) {
+      return res.status(404).json({ error: "Email not found" });
+    }
+
+    const userDocRef = db.collection("users").doc(userRecord.uid);
+    const userDoc = await userDocRef.get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: "User data not found" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await userDocRef.update({
+      hashedPassword,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 
 router.delete("/delete-user", async (req, res) => {
     const { email } = req.body;
