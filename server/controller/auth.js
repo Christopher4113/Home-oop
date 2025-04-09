@@ -4,6 +4,10 @@ const { getAuth, sendSignInLinkToEmail } = require("firebase/auth");
 const auth = require("../firebaseClient");
 const admin = require("../firebaseAdmin"); 
 const db = admin.firestore();
+const jwt = require("jsonwebtoken")
+const bcrypt = require('bcryptjs')
+require('dotenv').config();
+const SECRET_KEY = process.env.SECRET_KEY;
 const actionCodeSettings = {
     url: "https://home-oop.com/finishSignIn",
     handleCodeInApp: true,
@@ -53,6 +57,42 @@ router.post("/signup", async (req, res) => {
       res.status(400).json({ error: error.message });
     }
 });
+
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password)
+    return res.status(400).json({ error: "Email and password required" });
+
+  try {
+    const userRecord = await admin.auth().getUserByEmail(email).catch(() => null);
+    if (!userRecord) {
+      return res.status(404).json({ error: "Email not found" });
+    }
+
+    const userDoc = await db.collection("users").doc(userRecord.uid).get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: "User data not found" });
+    }
+
+    const userData = userDoc.data();
+    const isPasswordValid = await bcrypt.compare(password, userData.hashedPassword);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: "Invalid password" });
+    }
+
+    const token = jwt.sign(
+      { uid: userRecord.uid, email: userRecord.email, username: userData.username },
+      SECRET_KEY,
+      { expiresIn: "1d" } // 1 day expiration
+    );
+
+    res.status(200).json({ token });
+  } catch (error) {
+    console.error("Login error: ", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 
 router.delete("/delete-user", async (req, res) => {
     const { email } = req.body;
